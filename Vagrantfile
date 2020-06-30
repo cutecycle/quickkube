@@ -34,7 +34,7 @@ Vagrant.configure("2") do |config|
 
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
-  config.vm.network "private_network", ip: "192.168.33.10"
+  # config.vm.network "private_network", ip: "10.10.10.244"
 
   # Create a public network, which generally matched to bridged network.
   # Bridged networks make the machine appear as another physical device on
@@ -56,7 +56,8 @@ Vagrant.configure("2") do |config|
     vb.gui = false
   
     # Customize the amount of memory on the VM:
-    vb.memory = "2048"
+    vb.memory = "1024"
+    
   end
   #
   # View the documentation for the provider you are using for more
@@ -69,9 +70,17 @@ Vagrant.configure("2") do |config|
     cd /usr/src/app
     echo "export HOME=/usr/src/app" >> ~/.profile
     snap install microk8s --classic
+    snap install helm --classic
+    helm repo add stable https://kubernetes-charts.storage.googleapis.com/
     sudo usermod -a -G microk8s vagrant
     sudo chown -f -R vagrant ~/.kube
+    microk8s start
     microk8s enable proxy dashboard dns ingress
+    microk8s.kubectl port-forward -n kube-system service/kubernetes-dashboard 10443:443 --address 0.0.0.0
+    token=$(microk8s kubectl -n kube-system get secret | grep default-token | cut -d " " -f1)
+    microk8s kubectl -n kube-system describe secret $token
     microk8s.kubectl apply -f deployment.yaml
+
+
   SHELL
 end
